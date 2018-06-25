@@ -1,0 +1,100 @@
+$contentCatalog=apparel-ukContentCatalog 
+$contentCV=catalogVersion(CatalogVersion.catalog(Catalog.id[default=$contentCatalog]),CatalogVersion.version[default=Staged])[default=$contentCatalog:Staged] 
+$luxuryStoreAddonPrefix=addon:/storefrontlibrary 
+$productCatalog=apparelProductCatalog 
+$productCatalogName=Apparel Product Catalog 
+$productCV=catalogVersion(catalog(id[default=$productCatalog]),version[default='Staged'])[unique=true,default=$productCatalog:Staged] 
+$picture=media(code, $contentCV) ;
+
+
+# Import config properties into impex macros
+UPDATE GenericItem[processor=de.hybris.platform.commerceservices.impex.impl.ConfigPropertyImportProcessor];pk[unique=true]
+$jarResourceCms=$config-jarResourceCmsValue
+
+# Load the storefront context root config param
+$storefrontContextRoot=$config-storefrontContextRoot
+
+
+INSERT_UPDATE PageTemplate;$contentCV[unique=true];uid[unique=true];name;frontendTemplateName;
+;;promotionResultsGridPageTemplate;Promotion PLP Page Template;$luxuryStoreAddonPrefix/pages/customplp/customplpGridPage
+;;promotionResultsListPageTemplate;Promotion PLP Results List Page Template;$luxuryStoreAddonPrefix/pages/customplp/customplpListPage
+;;promotionEmptyResultPageTemplate;Promotion PLP Empty Results Page Template;$luxuryStoreAddonPrefix/pages/customplp/customplpEmptyPage
+
+UPDATE PageTemplate;$contentCV[unique=true];uid[unique=true];velocityTemplate[translator=de.hybris.platform.commerceservices.impex.impl.FileLoaderValueTranslator]
+;;promotionResultsListPageTemplate ;$jarResourceCms/structure-view/structure_searchResultsListPageTemplate.vm
+;;promotionResultsGridPageTemplate ;$jarResourceCms/structure-view/structure_searchResultsGridPageTemplate.vm
+;;promotionEmptyResultPageTemplate;$jarResourceCms/structure-view/structure_errorPageTemplate.vm
+
+INSERT_UPDATE PromotionPage;$contentCV[unique=true];uid[unique=true];name;masterTemplate(uid,$contentCV);defaultPage[default=false];approvalStatus(code)[default='approved'];previewImage(code, $contentCV);
+;;promotionResultsListPage;Promotion PLP Results List Page;promotionResultsListPageTemplate
+;;promotionGridPage;Promotion PLP Page;promotionResultsGridPageTemplate
+;;promotionEmptyResultPage;Promotion PLP Page;promotionEmptyResultPageTemplate
+
+INSERT_UPDATE ContentSlotName;name[unique=true];template(uid,$contentCV)[unique=true][default='promotionResultsGridPageTemplate'];validComponentTypes(code);compTypeGroup(code)
+;SiteLogo;;;logo
+;HeaderLinks;;;headerlinks
+;SearchBox;;;searchbox
+;MiniCart;;;minicart
+;NavigationBar;;;navigation
+;ProductLeftRefinements;;;
+;SearchResultsGridSlot;;;
+;Footer;;;footer
+;TopHeaderSlot;;;wide
+;BottomHeaderSlot;;;wide
+;PlaceholderContentSlot;;;
+
+INSERT_UPDATE ContentSlotName;name[unique=true];template(uid,$contentCV)[unique=true][default='promotionEmptyResultPageTemplate'];validComponentTypes(code);compTypeGroup(code)
+;SiteLogo;;;logo
+;HeaderLinks;;;headerlinks
+;SearchBox;;;searchbox
+;MiniCart;;;minicart
+;NavigationBar;;;navigation
+;MiddleContent;;CMSParagraphComponent
+;BottomContent;;;wide
+;SideContent;;;narrow
+;Footer;;;footer
+;TopHeaderSlot;;;wide
+;BottomHeaderSlot;;;wide
+;PlaceholderContentSlot;;;
+
+INSERT_UPDATE PromotionProductRefinementComponent;$contentCV[unique=true];uid[unique=true];name;&componentRef
+;;PromotionProductRefinement;Promotion Product Refinement Facet Component;PromotionProductRefinement
+
+INSERT_UPDATE PromotionResultsGridComponent;$contentCV[unique=true];uid[unique=true];name;&componentRef
+;;PromotionResultsGrid;Promotion Result Grid Component;PromotionResultsGrid
+
+# Create ContentSlots
+INSERT_UPDATE ContentSlot;$contentCV[unique=true];uid[unique=true];name;active;cmsComponents(uid,$contentCV)
+;;PromotionProductRefinementSlot;Promotion Product Refinement;true;PromotionProductRefinement
+;;PromotionResultsGridSlot;Promotion Results Grid;true;PromotionResultsGrid
+
+
+INSERT_UPDATE ContentSlotForPage;$contentCV[unique=true];uid[unique=true];position[unique=true];page(uid,$contentCV)[unique=true][default='promotionGridPage'];contentSlot(uid,$contentCV)[unique=true]
+;;PromotionProductRefinementSlotForPage;ProductLeftRefinements;;PromotionProductRefinementSlot
+;;PromotionResultsGridSlotForPage;SearchResultsGridSlot;;PromotionResultsGridSlot
+
+INSERT_UPDATE ContentSlotForTemplate;$contentCV[unique=true];uid[unique=true];position[unique=true];pageTemplate(uid,$contentCV)[unique=true][default='promotionResultsGridPageTemplate'];contentSlot(uid,$contentCV)[unique=true];allowOverwrite
+;;SiteLogo-promotionResultsGrid;SiteLogo;;SiteLogoSlot;true
+;;HomepageLink-promotionResultsGrid;HomepageNavLink;;HomepageNavLinkSlot;true
+;;MiniCart-promotionResultsGrid;MiniCart;;MiniCartSlot;true
+;;NavigationBar-promotionResultsGrid;NavigationBar;;NavigationBarSlot;true
+;;Footer-promotionResultsGrid;Footer;;FooterSlot;true
+;;HeaderLinks-promotionResultsGrid;HeaderLinks;;HeaderLinksSlot;true
+;;SearchBox-promotionResultsGrid;SearchBox;;SearchBoxSlot;true
+;;TopHeaderSlot-promotionResultsGrid;TopHeaderSlot;;TopHeaderSlot;true
+;;BottomHeaderSlot-promotionResultsGrid;BottomHeaderSlot;;BottomHeaderSlot;true
+#;;ProductLeftRefinements-promotionResultsGrid;ProductLeftRefinements;;ProductLeftRefinementsSlot;true
+#;;promotionResultsGridSlot-promotionResultsGrid;SearchResultsGridSlot;;SearchResultsGridSlot;true
+;;PlaceholderContentSlot-promotionResultsGrid;PlaceholderContentSlot;;PlaceholderContentSlot;true
+
+INSERT_UPDATE ContentSlotForTemplate;$contentCV[unique=true];uid[unique=true];position[unique=true];pageTemplate(uid,$contentCV)[unique=true][default='promotionEmptyResultPageTemplate'];contentSlot(uid,$contentCV)[unique=true];allowOverwrite
+;;SiteLogo-promotionEmptyResultPage;SiteLogo;;SiteLogoSlot;true
+;;HomepageLink-promotionEmptyResultPage;HomepageNavLink;;HomepageNavLinkSlot;true
+;;NavigationBar-promotionEmptyResultPage;NavigationBar;;NavigationBarSlot;true
+;;MiniCart-promotionEmptyResultPage;MiniCart;;MiniCartSlot;true
+;;Footer-promotionEmptyResultPage;Footer;;FooterSlot;true
+;;HeaderLinks-promotionEmptyResultPage;HeaderLinks;;HeaderLinksSlot;true
+;;SearchBox-promotionEmptyResultPage;SearchBox;;SearchBoxSlot;true
+;;TopHeaderSlot-promotionEmptyResultPage;TopHeaderSlot;;TopHeaderSlot;true
+;;BottomHeaderSlot-promotionEmptyResultPage;BottomHeaderSlot;;BottomHeaderSlot;true
+;;PlaceholderContentSlot-promotionEmptyResultPage;PlaceholderContentSlot;;PlaceholderContentSlot;true

@@ -1,0 +1,11 @@
+#Ant properties
+#Wed Nov 15 22:18:12 UTC 2017
+builddate=20171115 2218
+description=storefrontlibrary
+group.id=de.hybris.platform
+module.name=platform-module
+name=storefrontlibrary
+releasedate=20171115 1907
+vendor=hybris
+version=6.6.0.0
+version.api=6.6.0

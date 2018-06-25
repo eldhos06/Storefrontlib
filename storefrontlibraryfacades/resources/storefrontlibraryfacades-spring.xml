@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ [y] hybris Platform
+
+ Copyright (c) 2017 SAP SE or an SAP affiliate company.  All rights reserved.
+
+ This software is the confidential and proprietary information of SAP
+ ("Confidential Information"). You shall not disclose such Confidential
+ Information and shall use it only in accordance with the terms of the
+ license agreement you entered into with SAP.
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+	<context:annotation-config/> 
+    <bean id="storefrontlibraryfacadesSystemSetup" class="org.storefrontlibraryfacades.setup.StorefrontlibraryfacadesSystemSetup">
+        <!-- constructor arg injection example -->
+        <constructor-arg ref="storefrontlibraryfacadesService"/>
+    </bean>
+
+    <bean id="storefrontlibraryfacadesService" class="org.storefrontlibraryfacades.service.impl.DefaultStorefrontlibraryfacadesService">
+        <!-- setter injection example -->
+        <property name="modelService" ref="modelService"/>
+        <property name="mediaService" ref="mediaService"/>
+        <property name="flexibleSearchService" ref="flexibleSearchService"/>
+    </bean>
+	
+	<bean id="storeFrontLibProductSearchFacade" class="org.storefrontlibraryfacades.Impl.StoreFrontLibSolrProductSearchFacade" parent="defaultSolrProductSearchFacade" />
+	<bean id="promotionPageidValueProvider"
+		class="org.storefrontlibraryfacades.service.PromotionPageidValueProvider"
+		parent="abstractPropertyFieldValueProvider">
+		<property name="fieldNameProvider" ref="solrFieldNameProvider" />
+	</bean>
+	<alias name="storeFrontLibCommerceSearchResponseQueryPopulator" alias="commerceSearchResponseQueryPopulator" />
+	<bean id="storeFrontLibCommerceSearchResponseQueryPopulator" class="org.storefrontlibraryfacades.populators.StoreFrontLibSearchResponseQueryPopulator" />
+	
+	<alias name="defaultPromotionModelUrlResolver" alias="promotionModelUrlResolver"/>
+	<bean id="defaultPromotionModelUrlResolver"
+			class="org.storefrontlibraryfacades.service.impl.DefaultPromotionPageModelUrlResolver">
+		<property name="threadContextService" ref="threadContextService"/>
+		<property name="baseSiteService" ref="baseSiteService"/>
+		<property name="pattern" value="/{promotion-path}/cc/{promotion-code}"/>
+	</bean>
+	
+	<alias name="defaultStoreFrontLibCommerceSearchResponseFacetsPopulator" alias="commerceSearchResponseFacetsPopulator" />
+	<bean id="defaultStoreFrontLibCommerceSearchResponseFacetsPopulator" class="org.storefrontlibraryfacades.populators.StoreFrontLibSearchResponseFacetsPopulator" />
+	
+	<alias name="defaultStoreFrontLibSolrSearchStatePopulator" alias="solrSearchStatePopulator"/>
+	<bean id="defaultStoreFrontLibSolrSearchStatePopulator"
+			class="org.storefrontlibraryfacades.service.impl.StoreFrontLibSolrSearchStatePopulator"
+			>
+		<property name="searchPath" value="/search"/>
+		<property name="categoryDataUrlResolver" ref="categoryDataUrlResolver"/>
+		<property name="searchQueryConverter" ref="solrSearchQueryEncoder"/>
+		<property name="promotionModelUrlResolver" ref="promotionModelUrlResolver"/>
+		<property name="cmsPageService" ref="cmsPageService"/>
+	</bean>
+	<alias name="defaultStoreFrontLibCommerceSearchResponseBreadcrumbsPopulator" alias="commerceSearchResponseBreadcrumbsPopulator" />
+	<bean id="defaultStoreFrontLibCommerceSearchResponseBreadcrumbsPopulator"
+		class="org.storefrontlibraryfacades.populators.StoreFrontLibSearchResponseBreadcrumbsPopulator" />
+</beans>

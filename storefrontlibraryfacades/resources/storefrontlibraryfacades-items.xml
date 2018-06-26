@@ -15,16 +15,18 @@
 
 <items 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 			xsi:noNamespaceSchemaLocation="items.xsd">
-
+	<collectiontypes>
+		<collectiontype elementtype="SearchQueries" code="Queries" autocreate="true" type="list" />
+	</collectiontypes>
 	<relations>
-		<relation generate="true" localized="false" code="PromotionCatalogVersionRelation" autocreate="true">
-			<sourceElement type="CatalogVersion" cardinality="many" qualifier="catalogVersions">
-				<modifiers read="true" write="true" search="true" optional="true" />
-			</sourceElement>
-			<targetElement type="PreparePromotionPageCronJob" qualifier="promotionPageCronJob" cardinality="one">
-				<modifiers read="true" write="true" search="true" optional="true" />
-			</targetElement>
-		</relation>
+<!-- 		<relation generate="true" localized="false" code="PromotionCatalogVersionRelation" autocreate="true"> -->
+<!-- 			<sourceElement type="CatalogVersion" cardinality="many" qualifier="catalogVersions"> -->
+<!-- 				<modifiers read="true" write="true" search="true" optional="true" /> -->
+<!-- 			</sourceElement> -->
+<!-- 			<targetElement type="PreparePromotionPageCronJob" qualifier="promotionPageCronJob" cardinality="one"> -->
+<!-- 				<modifiers read="true" write="true" search="true" optional="true" /> -->
+<!-- 			</targetElement> -->
+<!-- 		</relation> -->
 		<relation generate="true" localized="false" code="PromotionPLPRelation" autocreate="true">
 			<deployment table="PromotionPLPRelation" typecode="11002"/>
 			<sourceElement type="Product" cardinality="many" qualifier="products">
@@ -48,11 +50,54 @@
 						<persistence type="property" />
 						<description>Page valid upto.</description>
 					</attribute>
+					<attribute qualifier="searchQueries" type="Queries">
+						<modifiers optional="true" initial="false" />
+						<persistence type="property" />
+					</attribute>
+                </attributes>
+         </itemtype>
+          <itemtype code="SearchQueries" extends="GenericItem" autocreate="true" generate="true" >
+          <deployment table="SearchQueries" typecode="11004"/>
+                <attributes>
+					<attribute qualifier="searchQuery" type="java.lang.String">
+						<modifiers optional="true" initial="false" />
+						<persistence type="property" />
+					</attribute>
+					<attribute qualifier="categoryCode" type="java.lang.String">
+						<modifiers optional="true" initial="false" />
+						<persistence type="property" />
+					</attribute>
                 </attributes>
          </itemtype>
          <itemtype code="PreparePromotionPageCronJob" autocreate="true" generate="true" extends="CronJob"
                   jaloclass="de.hybris.platform.cronjob.jalo.PreparePromotionPageCronJob">
-          <attributes>
+          
+               <custom-properties>
+				<property name="catalogItemType">
+					<value>java.lang.Boolean.TRUE</value>
+				</property>
+				<property name="catalogVersionAttributeQualifier">
+					<value>"catalogVersion"</value>
+				</property>
+				<property name="uniqueKeyAttributeQualifier">
+					<value>"code"</value>
+				</property>
+				<property name="catalog.sync.default.root.type">
+					<value>Boolean.TRUE</value>
+				</property>
+				<property name="catalog.sync.default.root.type.order">
+					<value>Integer.valueOf(100)</value>
+				</property>
+			</custom-properties>
+			<attributes>
+				<attribute qualifier="contentCatalogVersion" type="CatalogVersion">
+					<persistence type="property" />
+					<modifiers optional="true" initial="true" read="true" write="false" />
+				</attribute>
+				<attribute qualifier="productCatalogVersion" type="CatalogVersion">
+					<persistence type="property" />
+					<modifiers optional="true" initial="true" read="true" write="false" />
+				</attribute>
                 <attribute qualifier="site" type="BaseSite">
 						<description>The site on which the promotion page has to created.</description>
 						<persistence type="property" />

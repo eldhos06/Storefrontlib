@@ -67,5 +67,7 @@
         <property name="catalogVersionService" ref="catalogVersionService"/>
         <property name="sessionService" ref="sessionService"/>
         <property name="productSearchFacade" ref="storeFrontLibProductSearchFacade"/>
+        <property name="productService" ref="productService"/>
+        <property name="modelService" ref="modelService"/>
     </bean>	
 </beans>

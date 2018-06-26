@@ -5,7 +5,7 @@ $productCatalog=apparelProductCatalog
 $productCatalogName=Apparel Product Catalog 
 $productCV=catalogVersion(catalog(id[default=$productCatalog]),version[default='Staged'])[unique=true,default=$productCatalog:Staged] 
 $picture=media(code, $contentCV) ;
-
+$lang=en
 
 # Import config properties into impex macros
 UPDATE GenericItem[processor=de.hybris.platform.commerceservices.impex.impl.ConfigPropertyImportProcessor];pk[unique=true]
@@ -21,14 +21,14 @@ INSERT_UPDATE PageTemplate;$contentCV[unique=true];uid[unique=true];name;fronten
 ;;promotionEmptyResultPageTemplate;Promotion PLP Empty Results Page Template;$luxuryStoreAddonPrefix/pages/customplp/customplpEmptyPage
 
 UPDATE PageTemplate;$contentCV[unique=true];uid[unique=true];velocityTemplate[translator=de.hybris.platform.commerceservices.impex.impl.FileLoaderValueTranslator]
-;;promotionResultsListPageTemplate ;$jarResourceCms/structure-view/structure_searchResultsListPageTemplate.vm
-;;promotionResultsGridPageTemplate ;$jarResourceCms/structure-view/structure_searchResultsGridPageTemplate.vm
+;;promotionResultsListPageTemplate ;$jarResourceCms/structure-view/structure_productGridPageTemplate.vm
+;;promotionResultsGridPageTemplate ;$jarResourceCms/structure-view/structure_productGridPageTemplate.vm
 ;;promotionEmptyResultPageTemplate;$jarResourceCms/structure-view/structure_errorPageTemplate.vm
 
-INSERT_UPDATE PromotionPage;$contentCV[unique=true];uid[unique=true];name;masterTemplate(uid,$contentCV);defaultPage[default=false];approvalStatus(code)[default='approved'];previewImage(code, $contentCV);
-;;promotionResultsListPage;Promotion PLP Results List Page;promotionResultsListPageTemplate
-;;promotionGridPage;Promotion PLP Page;promotionResultsGridPageTemplate
-;;promotionEmptyResultPage;Promotion PLP Page;promotionEmptyResultPageTemplate
+INSERT_UPDATE PromotionPage;$contentCV[unique=true];uid[unique=true];name;title[lang=$lang];pageValidityFrom[dateformat=dd.MM.yyyy HH:mm:ss];pageValidityTo[dateformat=dd.MM.yyyy HH:mm:ss];masterTemplate(uid,$contentCV);defaultPage[default=false];approvalStatus(code)[default='approved'];previewImage(code, $contentCV);
+;;promotionResultsListPage;Promotion PLP Results List Page;Promotion PLP Results List Page;27.04.2010 00:00:00;27.04.2030 00:00:00;promotionResultsListPageTemplate
+;;promotionGridPage;Promotion PLP Page;Promotion PLP Page;27.04.2010 00:00:00;27.04.2030 00:00:00;promotionResultsGridPageTemplate
+;;promotionEmptyResultPage;Promotion PLP Page;Promotion PLP Page;27.04.2010 00:00:00;27.04.2030 00:00:00;promotionEmptyResultPageTemplate
 
 INSERT_UPDATE ContentSlotName;name[unique=true];template(uid,$contentCV)[unique=true][default='promotionResultsGridPageTemplate'];validComponentTypes(code);compTypeGroup(code)
 ;SiteLogo;;;logo
@@ -37,7 +37,7 @@ INSERT_UPDATE ContentSlotName;name[unique=true];template(uid,$contentCV)[unique=
 ;MiniCart;;;minicart
 ;NavigationBar;;;navigation
 ;ProductLeftRefinements;;;
-;SearchResultsGridSlot;;;
+;ProductGridSlot;;;
 ;Footer;;;footer
 ;TopHeaderSlot;;;wide
 ;BottomHeaderSlot;;;wide
@@ -71,7 +71,7 @@ INSERT_UPDATE ContentSlot;$contentCV[unique=true];uid[unique=true];name;active;c
 
 INSERT_UPDATE ContentSlotForPage;$contentCV[unique=true];uid[unique=true];position[unique=true];page(uid,$contentCV)[unique=true][default='promotionGridPage'];contentSlot(uid,$contentCV)[unique=true]
 ;;PromotionProductRefinementSlotForPage;ProductLeftRefinements;;PromotionProductRefinementSlot
-;;PromotionResultsGridSlotForPage;SearchResultsGridSlot;;PromotionResultsGridSlot
+;;PromotionResultsGridSlotForPage;ProductGridSlot;;PromotionResultsGridSlot
 
 INSERT_UPDATE ContentSlotForTemplate;$contentCV[unique=true];uid[unique=true];position[unique=true];pageTemplate(uid,$contentCV)[unique=true][default='promotionResultsGridPageTemplate'];contentSlot(uid,$contentCV)[unique=true];allowOverwrite
 ;;SiteLogo-promotionResultsGrid;SiteLogo;;SiteLogoSlot;true

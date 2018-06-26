@@ -17,6 +17,14 @@
 			xsi:noNamespaceSchemaLocation="items.xsd">
 
 	<relations>
+		<relation generate="true" localized="false" code="PromotionCatalogVersionRelation" autocreate="true">
+			<sourceElement type="CatalogVersion" cardinality="many" qualifier="catalogVersions">
+				<modifiers read="true" write="true" search="true" optional="true" />
+			</sourceElement>
+			<targetElement type="PreparePromotionPageCronJob" qualifier="promotionPageCronJob" cardinality="one">
+				<modifiers read="true" write="true" search="true" optional="true" />
+			</targetElement>
+		</relation>
 		<relation generate="true" localized="false" code="PromotionPLPRelation" autocreate="true">
 			<deployment table="PromotionPLPRelation" typecode="11002"/>
 			<sourceElement type="Product" cardinality="many" qualifier="products">
@@ -42,6 +50,14 @@
 					</attribute>
                 </attributes>
          </itemtype>
-         
+         <itemtype code="PreparePromotionPageCronJob" autocreate="true" generate="true" extends="CronJob"
+                  jaloclass="de.hybris.platform.cronjob.jalo.PreparePromotionPageCronJob">
+          <attributes>
+                <attribute qualifier="site" type="BaseSite">
+						<description>The site on which the promotion page has to created.</description>
+						<persistence type="property" />
+				</attribute>
+            </attributes>
+        </itemtype>
 	</itemtypes>
 </items>

@@ -62,4 +62,10 @@
 	<alias name="defaultStoreFrontLibCommerceSearchResponseBreadcrumbsPopulator" alias="commerceSearchResponseBreadcrumbsPopulator" />
 	<bean id="defaultStoreFrontLibCommerceSearchResponseBreadcrumbsPopulator"
 		class="org.storefrontlibraryfacades.populators.StoreFrontLibSearchResponseBreadcrumbsPopulator" />
+	
+	<bean id="preparePromotionPageCronJob" class="org.storefrontlibraryfacades.service.impl.PreparePromotionPageJob" parent="abstractJobPerformable">
+        <property name="catalogVersionService" ref="catalogVersionService"/>
+        <property name="sessionService" ref="sessionService"/>
+        <property name="productSearchFacade" ref="storeFrontLibProductSearchFacade"/>
+    </bean>	
 </beans>

@@ -69,5 +69,9 @@
         <property name="productSearchFacade" ref="storeFrontLibProductSearchFacade"/>
         <property name="productService" ref="productService"/>
         <property name="modelService" ref="modelService"/>
+        <property name="baseSiteService" ref="baseSiteService" />
+        <property name="searchRestrictionService" ref="searchRestrictionService" />
+        <property name="typeService" ref="typeService" />
+        <property name="activateBaseSiteInSessionStrategy" ref="activateBaseSiteInSessionStrategy" />
     </bean>	
 </beans>

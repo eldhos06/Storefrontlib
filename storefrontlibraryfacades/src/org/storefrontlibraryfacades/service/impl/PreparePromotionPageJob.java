@@ -11,6 +11,7 @@
  */
 package org.storefrontlibraryfacades.service.impl;
 
+import de.hybris.platform.basecommerce.strategies.ActivateBaseSiteInSessionStrategy;
 import de.hybris.platform.catalog.CatalogVersionService;
 import de.hybris.platform.catalog.model.CatalogVersionModel;
 import de.hybris.platform.commercefacades.product.data.ProductData;
@@ -21,19 +22,29 @@ import de.hybris.platform.commerceservices.search.facetdata.FacetValueData;
 import de.hybris.platform.commerceservices.search.facetdata.ProductSearchPageData;
 import de.hybris.platform.commerceservices.search.pagedata.PageableData;
 import de.hybris.platform.core.model.product.ProductModel;
+import de.hybris.platform.core.model.security.PrincipalModel;
+import de.hybris.platform.core.model.type.ComposedTypeModel;
+import de.hybris.platform.core.model.type.SearchRestrictionModel;
+import de.hybris.platform.core.model.user.CustomerModel;
 import de.hybris.platform.cronjob.model.PreparePromotionPageCronJobModel;
+import de.hybris.platform.cronjob.model.TriggerModel;
 import de.hybris.platform.product.ProductService;
+import de.hybris.platform.search.restriction.SearchRestrictionService;
 import de.hybris.platform.servicelayer.cronjob.AbstractJobPerformable;
 import de.hybris.platform.servicelayer.cronjob.PerformResult;
 import de.hybris.platform.servicelayer.dto.converter.ConversionException;
 import de.hybris.platform.servicelayer.search.FlexibleSearchQuery;
 import de.hybris.platform.servicelayer.search.SearchResult;
+import de.hybris.platform.servicelayer.type.TypeService;
+import de.hybris.platform.site.BaseSiteService;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+
+import javax.annotation.Resource;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -57,6 +68,76 @@ public class PreparePromotionPageJob extends AbstractJobPerformable<PreparePromo
 	private CatalogVersionService catalogVersionService;
 	private StoreFrontLibSolrProductSearchFacade productSearchFacade;
 	private ProductService productService;
+	private BaseSiteService baseSiteService;
+	private ActivateBaseSiteInSessionStrategy activateBaseSiteInSessionStrategy;
+	private SearchRestrictionService searchRestrictionService;
+	private TypeService typeService;
+	/**
+	 * @return the typeService
+	 */
+	public TypeService getTypeService()
+	{
+		return typeService;
+	}
+
+	/**
+	 * @param typeService the typeService to set
+	 */
+	public void setTypeService(TypeService typeService)
+	{
+		this.typeService = typeService;
+	}
+
+	/**
+	 * @return the searchRestrictionService
+	 */
+	public SearchRestrictionService getSearchRestrictionService()
+	{
+		return searchRestrictionService;
+	}
+
+	/**
+	 * @param searchRestrictionService
+	 *           the searchRestrictionService to set
+	 */
+	public void setSearchRestrictionService(final SearchRestrictionService searchRestrictionService)
+	{
+		this.searchRestrictionService = searchRestrictionService;
+	}
+
+	/**
+	 * @return the activateBaseSiteInSessionStrategy
+	 */
+	ActivateBaseSiteInSessionStrategy getActivateBaseSiteInSessionStrategy()
+	{
+		return activateBaseSiteInSessionStrategy;
+	}
+
+	/**
+	 * @param activateBaseSiteInSessionStrategy
+	 *           the activateBaseSiteInSessionStrategy to set
+	 */
+	public void setActivateBaseSiteInSessionStrategy(final ActivateBaseSiteInSessionStrategy activateBaseSiteInSessionStrategy)
+	{
+		this.activateBaseSiteInSessionStrategy = activateBaseSiteInSessionStrategy;
+	}
+
+	/**
+	 * @return the baseSiteService
+	 */
+	BaseSiteService getBaseSiteService()
+	{
+		return baseSiteService;
+	}
+
+	/**
+	 * @param baseSiteService
+	 *           the baseSiteService to set
+	 */
+	public void setBaseSiteService(final BaseSiteService baseSiteService)
+	{
+		this.baseSiteService = baseSiteService;
+	}
 
 	/**
 	 * @return the modelService
@@ -91,22 +172,28 @@ public class PreparePromotionPageJob extends AbstractJobPerformable<PreparePromo
 	{
 		this.productSearchFacade = productSearchFacade;
 	}
-
 	@Override
 	public PerformResult perform(final PreparePromotionPageCronJobModel cronJob)
 	{
 		if (cronJob == null)
 		{
 			LOG.warn("Provided MoveMediaCronJobModel is null");
-			//return new PerformResult(CronJobResult., "FINISHED");
+			return null;
+			//new PerformResult(CronJobResult.ERROR, CronJobStatus.FINISHED);
 		}
-		sessionService.setAttribute("currentSite", cronJob.getSite());
-		getCatalogVersionService().addSessionCatalogVersion(cronJob.getContentCatalogVersion());
-		getCatalogVersionService().addSessionCatalogVersion(cronJob.getProductCatalogVersion());
+		final PageableData pageableData = createPageableData(0, 100, null);
+		getBaseSiteService().setCurrentBaseSite(cronJob.getSite(), false);
+		getActivateBaseSiteInSessionStrategy().activate(cronJob.getSite());
+		getSearchRestrictionService().enableSearchRestrictions();
+		sessionService.setAttribute("disableRestrictionGroupInheritance",false);
+		//		LOG.debug("Base site " + cronJob.getSite() + " activated.");
+		//		sessionService.setAttribute("currentSite", cronJob.getSite());
+		//		getCatalogVersionService().addSessionCatalogVersion(cronJob.getContentCatalogVersion());
+		//		getCatalogVersionService().addSessionCatalogVersion(cronJob.getProductCatalogVersion());
 		ProductSearchPageData<SearchStateData, ProductData> searchPageData = null;
 		try
 		{
-			final List<PromotionPageModel> promotionPages = getAllPromotionPages();
+			final List<PromotionPageModel> promotionPages = getAllPromotionPages(cronJob.getContentCatalogVersion());
 
 			for (final PromotionPageModel promotionPage : promotionPages)
 			{
@@ -115,31 +202,33 @@ public class PreparePromotionPageJob extends AbstractJobPerformable<PreparePromo
 				{
 					LOG.info("Searching for Solr Query:" + searchQuery.getSearchQuery());
 					LOG.info("Searching for Category:" + searchQuery.getCategoryCode());
+
+					final SearchStateData searchState = new SearchStateData();
+					final SearchQueryData searchQueryData = new SearchQueryData();
+					if (StringUtils.isNotEmpty(searchQuery.getSearchQuery()))
+					{
+						searchQueryData.setValue(searchQuery.getSearchQuery());
+					}
+					searchState.setQuery(searchQueryData);
+
 					if (StringUtils.isNotBlank(searchQuery.getCategoryCode()))
 					{
 						LOG.info("Performing Category Search...");
-						final PageableData pageableData = createPageableData(0, 100, null);
-						final SearchStateData searchState = new SearchStateData();
-						final SearchQueryData searchQueryData = new SearchQueryData();
-						if (StringUtils.isNotEmpty(searchQuery.getSearchQuery()))
-						{
-							searchQueryData.setValue(searchQuery.getSearchQuery());
-						}
-						searchState.setQuery(searchQueryData);
+
+
 						searchPageData = encodeSearchPageData(getProductSearchFacade().categorySearch(searchQuery.getCategoryCode(),
 								searchState, pageableData));
 					}
 					else if (StringUtils.isNotBlank(searchQuery.getSearchQuery()))
 					{
 						LOG.info("Performing Free Text Search...");
-						searchPageData = encodeSearchPageData(getProductSearchFacade().textSearch(searchQuery.getSearchQuery()));
+						searchPageData = encodeSearchPageData(getProductSearchFacade().textSearch(searchState, pageableData));
 					}
+					final Collection<ProductModel> productlist = new ArrayList<ProductModel>();
 					for (final ProductData product : searchPageData.getResults())
 					{
-
-						final Collection<ProductModel> productlist = new ArrayList<ProductModel>();
-
-						final ProductModel productmodel = getProductService().getProductForCode(cronJob.getProductCatalogVersion(), product.getCode());
+						final ProductModel productmodel = getProductService().getProductForCode(cronJob.getProductCatalogVersion(),
+								product.getCode());
 						if (productmodel != null)
 						{
 							LOG.info("Adding Products..." + productmodel.getCode());
@@ -156,20 +245,27 @@ public class PreparePromotionPageJob extends AbstractJobPerformable<PreparePromo
 		{
 			LOG.error(e);
 		}
+		finally
+		{
+			getSearchRestrictionService().disableSearchRestrictions();
+		}
 		return null;//new PerformResult(CronJobResult.SUCCESS, CronJobStatus.FINISHED);		
 	}
 
-	protected List<PromotionPageModel> getAllPromotionPages()
+	protected List<PromotionPageModel> getAllPromotionPages(final CatalogVersionModel catalogVersion)
 	{
 		final Date today = new Date();
+		final StringBuilder QUERY = new StringBuilder("SELECT {" + PromotionPageModel.PK + "} FROM {"
+				+ PromotionPageModel._TYPECODE + "}");
+		QUERY.append(" Where {catalogVersion}=?catalogVersion");
 		try
 		{
-			final StringBuilder QUERY = new StringBuilder("SELECT {" + PromotionPageModel.PK + "} FROM {"
-					+ PromotionPageModel._TYPECODE + "}");
-			final String DATE_FORMAT = "Where (?currentDate BETWEEN {pageValidityFrom} AND {pageValidityTo}) ";
+			final String DATE_FORMAT = " And (?currentDate BETWEEN {pageValidityFrom} AND {pageValidityTo}) ";
 			QUERY.append(DATE_FORMAT);
+
 			final FlexibleSearchQuery searchQuery = new FlexibleSearchQuery(QUERY.toString());
 			searchQuery.addQueryParameter("currentDate", today);
+			searchQuery.addQueryParameter("catalogVersion", catalogVersion);
 			final SearchResult<PromotionPageModel> processes = flexibleSearchService.search(searchQuery);
 			return processes.getResult();
 		}
@@ -179,12 +275,12 @@ public class PreparePromotionPageJob extends AbstractJobPerformable<PreparePromo
 		}
 		try
 		{
-			final StringBuilder QUERY = new StringBuilder("SELECT {" + PromotionPageModel.PK + "} FROM {"
-					+ PromotionPageModel._TYPECODE + "}");
-			final String DATE_FORMAT = "Where (to_timestamp(?currentDate, 'yyyy-mm-dd hh24:mi:ss') BETWEEN {pageValidityFrom} AND {pageValidityTo}) ";
+
+			final String DATE_FORMAT = " And (to_timestamp(?currentDate, 'yyyy-mm-dd hh24:mi:ss') BETWEEN {pageValidityFrom} AND {pageValidityTo}) ";
 			QUERY.append(DATE_FORMAT);
 			final FlexibleSearchQuery searchQuery = new FlexibleSearchQuery(QUERY.toString());
 			searchQuery.addQueryParameter("currentDate", today);
+			searchQuery.addQueryParameter("catalogVersion", catalogVersion);
 			final SearchResult<PromotionPageModel> processes = flexibleSearchService.search(searchQuery);
 			return processes.getResult();
 		}

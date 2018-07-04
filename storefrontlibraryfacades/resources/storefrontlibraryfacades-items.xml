@@ -92,11 +92,11 @@
 			<attributes>
 				<attribute qualifier="contentCatalogVersion" type="CatalogVersion">
 					<persistence type="property" />
-					<modifiers optional="true" initial="true" read="true" write="false" />
+					<modifiers optional="true" />
 				</attribute>
 				<attribute qualifier="productCatalogVersion" type="CatalogVersion">
 					<persistence type="property" />
-					<modifiers optional="true" initial="true" read="true" write="false" />
+					<modifiers optional="true"/>
 				</attribute>
                 <attribute qualifier="site" type="BaseSite">
 						<description>The site on which the promotion page has to created.</description>
